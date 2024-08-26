@@ -1,3 +1,4 @@
+const { Mongoose, default: mongoose } = require("mongoose");
 const { errorHandler } = require("../helpers/error_handler");
 const Dictionary = require("../schemas/Dictionary");
 
@@ -10,8 +11,9 @@ const addTerm = async (req, res) => {
     if (dict) {
       return res.status(400).send({ message: "This term exists.!" });
     }
-    const newTerm = Dictionary.create({ term, letter: term[0] });
-    res.status(201).send({ message: "New term created", newTerm });
+    const newTerm = await Dictionary.create({ term, letter: term[0] });
+    // console.log(newTerm);
+    res.status(201).send({ message: "New term created" });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -32,20 +34,59 @@ const getTerms = async (req, res) => {
 
 const getTermByID = async (req, res) => {
   try {
-  } catch (error) {}
+    const termID = req.params.id;
+    if (!mongoose.isValidObjectId(termID)) {
+      return res.status(400).send({ message: "Incorrect ObjectID" });
+    }
+    const foundTerm = await Dictionary.findById(termID);
+    if (!foundTerm) {
+      return res.status(404).send({ message: "Term not found" });
+    }
+    console.log(foundTerm);
+    res.status(200).send(foundTerm);
+  } catch (error) {
+    errorHandler(res, error);
+  }
 };
 
 const deleteTerm = async (req, res) => {
   try {
-  } catch (error) {}
+    const { termID } = req.body;
+    if (!mongoose.isValidObjectId(termID)) {
+      return res.status(400).send({ message: "Incorrect ObjectID" });
+    }
+    const deletedTerm = await Dictionary.findByIdAndDelete(termID);
+    res.status(200).send({ message: "Term deleted succesfully", deletedTerm });
+  } catch (error) {
+    errorHandler(res, error);
+  }
 };
 
 const updateTerm = async (req, res) => {
   try {
-  } catch (error) {}
+    const { term } = req.body;
+    const termID = req.params.id;
+    if (!mongoose.isValidObjectId(termID)) {
+      return res.status(400).send({ message: "Incorrect ObjectID" });
+    }
+    const updatedTerm = await Dictionary.findByIdAndUpdate(termID, {
+      term,
+      letter: term[0],
+    });
+    if (!updatedTerm) {
+      return res.status(404).send({ message: "Term not found" });
+    }
+    console.log(updatedTerm);
+    res.status(200).send({ message: "Term updated succesfully", updatedTerm });
+  } catch (error) {
+    errorHandler(res, error);
+  }
 };
 
 module.exports = {
   addTerm,
   getTerms,
+  updateTerm,
+  getTermByID,
+  deleteTerm,
 };
