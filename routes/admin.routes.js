@@ -5,7 +5,8 @@ const {
   deleteAdmin,
   updateAdmin,
   getAdminByID,
-  login,
+  loginAdmin,
+  logoutAdmin,
 } = require("../controllers/admin");
 
 const router = express.Router();
@@ -15,7 +16,7 @@ router.post("/add", addAdmin);
 router.delete("/delete", deleteAdmin);
 router.put("/update/:id", updateAdmin);
 router.get("/:id", getAdminByID);
-router.post("/login", login);
-
+router.post("/login", loginAdmin);
+router.post("/logout", logoutAdmin);
 
 module.exports = router;

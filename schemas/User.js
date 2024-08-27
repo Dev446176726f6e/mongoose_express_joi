@@ -24,8 +24,8 @@ const UserSchema = new Schema(
       trim: true,
       minLength: 8,
       maxLength: 50,
-      match:
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      // match:
+        // /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
     },
     info: {
       type: String,

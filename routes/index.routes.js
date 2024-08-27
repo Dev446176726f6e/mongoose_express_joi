@@ -4,8 +4,11 @@ const CategoryRouter = require("./category.routes");
 const DescriptionRouter = require("./description.routes");
 const SynonymRouter = require("./synonym.routes");
 const AdminRouter = require("./admin.routes");
-// user
-// author
+const UserRouter = require("./user.routes");
+const AuthorRouter = require("./author.routes");
+const QaRouter = require("./qa.routes");
+const TopicRouter = require("./topic.routes");
+const GuestRouter = require("./guest.routes");
 
 const router = express.Router();
 
@@ -14,7 +17,10 @@ router.use("/cat", CategoryRouter);
 router.use("/desc", DescriptionRouter);
 router.use("/syn", SynonymRouter);
 router.use("/admin", AdminRouter);
-// user
-// author
+router.use("/user", UserRouter);
+router.use("/author", AuthorRouter);
+router.use("/qA", QaRouter);
+router.use("/topic", TopicRouter);
+router.use("/guest", GuestRouter);
 
 module.exports = router;

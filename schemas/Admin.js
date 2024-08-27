@@ -30,9 +30,8 @@ const AdminSchema = new Schema(
       required: true,
       trim: true,
       minLength: 8,
-      maxLength: 50,
-      match:
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      // match:
+        // /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
     },
     is_active: {
       type: Boolean,

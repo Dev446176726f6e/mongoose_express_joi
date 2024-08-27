@@ -1,0 +1,20 @@
+Finished list: Synonym, Dictionary, Description, Category, Admin. (Author)
+
+Wait List: User, Topic, Question_Answer, Guest, Topic.
+
+Small Ones: Desc_QA, Tag, Desc_Topic, Social, Author_Social.
+
+
+   1. Finishing with all schemas. DONE (except 5 small schemas)
+   2. Then controllers. DONE
+   3. Routes. DONE
+   4. Validation (for important collections lik Admin, Author, User) PROCESS
+   5. Finish with login and logout (generating tokens, and cookies) PROCESS
+
+
+
+what are those.?
+
+cookies,
+
+token, (accessToken, refreshToken)

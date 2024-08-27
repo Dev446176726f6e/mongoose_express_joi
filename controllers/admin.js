@@ -2,6 +2,8 @@ const { Mongoose, default: mongoose } = require("mongoose");
 const { errorHandler } = require("../helpers/error_handler");
 const Admin = require("../schemas/Admin");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const config = require("config");
 
 const addAdmin = async (req, res) => {
   try {
@@ -26,6 +28,20 @@ const addAdmin = async (req, res) => {
 
 const getAdmins = async (req, res) => {
   try {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+      return res.status(403).send({ message: "Token is not provided" });
+    }
+    console.log(authorization);
+    const bearer = authorization.split(" ")[0];
+    const token = authorization.split(" ")[1];
+
+    if (bearer != "Bearer" || !token) {
+      return res.status(403).send({ message: "Wrong token" });
+    }
+    const decodedToken = jwt.decode(token, config.get("tokenKey"));
+    console.log(decodedToken);
+
     const admins = await Admin.find();
     if (admins.length === 0) {
       return res.status(204).send({ message: "Admins is empty.!" });
@@ -96,22 +112,40 @@ const updateAdmin = async (req, res) => {
   }
 };
 
-const login = (req, res) => {
+const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const admin = Admin.findOne({ email: email });
+    const admin = await Admin.findOne({ email });
     if (!admin) {
       return res.status(404).send({ message: "Admin not found" });
     }
-    if (admin.email !== email || admin.password !== password) {
-      return res.status(403).send({ message: "Forbidden admin" });
+    const validPassword = await bcrypt.compareSync(password, admin.password);
+
+    if (!validPassword) {
+      return res.status(400).send({ message: "Invalid email or password" });
     }
+
+    const payload = {
+      _id: admin._id,
+      email: admin.email,
+    };
+    const token = jwt.sign(payload, config.get("tokenKey"), {
+      expiresIn: config.get("tokenTime"),
+    });
+    res.send({ message: "Admin logged in", token });
   } catch (error) {
     errorHandler(res, error);
   }
 };
 
-const logout = (req, res) => {};
+const logoutAdmin = async (req, res) => {
+  try {
+    const adminId = req.params.id;
+    res.clearCookie("token");
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
 
 module.exports = {
   getAdminByID,
@@ -119,5 +153,6 @@ module.exports = {
   updateAdmin,
   deleteAdmin,
   addAdmin,
-  login,
+  logoutAdmin,
+  loginAdmin,
 };
