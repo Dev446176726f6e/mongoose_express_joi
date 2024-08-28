@@ -132,6 +132,9 @@ const loginAdmin = async (req, res) => {
     const token = jwt.sign(payload, config.get("tokenKey"), {
       expiresIn: config.get("tokenTime"),
     });
+
+    res.cookie("token", token, { httpOnly: true });
+    // console.log(res.getHeaders());
     res.send({ message: "Admin logged in", token });
   } catch (error) {
     errorHandler(res, error);
@@ -140,8 +143,8 @@ const loginAdmin = async (req, res) => {
 
 const logoutAdmin = async (req, res) => {
   try {
-    const adminId = req.params.id;
     res.clearCookie("token");
+    res.status(200).send({ message: "Admin logged out successfully" });
   } catch (error) {
     errorHandler(res, error);
   }

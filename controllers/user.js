@@ -17,11 +17,11 @@ const addUser = async (req, res) => {
       updated_date,
       is_active,
     } = req.body;
-    //  const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = bcrypt.hashSync(password, 10);
     const newUser = await User.create({
       name,
       email,
-      password,
+      password: hashedPassword,
       info,
       photo,
       created_date,
@@ -37,20 +37,6 @@ const addUser = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    //  const authorization = req.headers.authorization;
-    //  if (!authorization) {
-    // return res.status(403).send({ message: "Token is not provided" });
-    //  }
-    //  console.log(authorization);
-    //  const bearer = authorization.split(" ")[0];
-    //  const token = authorization.split(" ")[1];
-
-    //  if (bearer != "Bearer" || !token) {
-    // return res.status(403).send({ message: "Wrong token" });
-    //  }
-    //  const decodedToken = jwt.decode(token, config.get("tokenKey"));
-    //  console.log(decodedToken);
-
     const users = await User.find();
     if (users.length === 0) {
       return res.status(204).send({ message: "Users is empty.!" });
@@ -71,7 +57,6 @@ const getUserByID = async (req, res) => {
     if (!foundUser) {
       return res.status(404).send({ message: "User not found" });
     }
-    console.log(foundUser);
     res.status(200).send(foundUser);
   } catch (error) {
     errorHandler(res, error);
@@ -85,7 +70,7 @@ const deleteUser = async (req, res) => {
       return res.status(400).send({ message: "Incorrect ObjectID" });
     }
     const deletedUser = await User.findByIdAndDelete(user_id);
-    res.status(200).send({ message: "User deleted succesfully", deletedUser });
+    res.status(200).send({ message: "User deleted successfully", deletedUser });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -93,74 +78,69 @@ const deleteUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      info,
-      photo,
-      created_date,
-      updated_date,
-      is_active,
-    } = req.body;
+    const { name, email, password, info, photo, is_active } = req.body;
     const userID = req.params.id;
     if (!mongoose.isValidObjectId(userID)) {
       return res.status(400).send({ message: "Incorrect ObjectID" });
     }
-    const updatedUser = await User.findByIdAndUpdate(userID, {
-      name,
-      email,
-      password,
-      info,
-      photo,
-      created_date,
-      updated_date,
-      is_active,
-    });
+    const hashedPassword = password ? bcrypt.hashSync(password, 10) : undefined;
+    const updatedUser = await User.findByIdAndUpdate(
+      userID,
+      {
+        name,
+        email,
+        password: hashedPassword,
+        info,
+        photo,
+        updated_date: Date.now(),
+        is_active,
+      },
+      { new: true }
+    );
     if (!updatedUser) {
       return res.status(404).send({ message: "User not found" });
     }
-    console.log(updatedUser);
-    res.status(200).send({ message: "User updated succesfully", updatedUser });
+    res.status(200).send({ message: "User updated successfully", updatedUser });
   } catch (error) {
     errorHandler(res, error);
   }
 };
 
-// const loginAdmin = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     const admin = await Admin.findOne({ email });
-//     if (!admin) {
-//       return res.status(404).send({ message: "Admin not found" });
-//     }
-//     const validPassword = await bcrypt.compareSync(password, admin.password);
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(400).send({ message: "Invalid email or password" });
+    }
 
-//     if (!validPassword) {
-//       return res.status(400).send({ message: "Invalid email or password" });
-//     }
+    const payload = {
+      _id: user._id,
+      email: user.email,
+    };
+    const token = jwt.sign(payload, config.get("tokenKey"), {
+      expiresIn: config.get("tokenTime"),
+    });
 
-//     const payload = {
-//       _id: admin._id,
-//       email: admin.email,
-//     };
-//     const token = jwt.sign(payload, config.get("tokenKey"), {
-//       expiresIn: config.get("tokenTime"),
-//     });
-//     res.send({ message: "Admin logged in", token });
-//   } catch (error) {
-//     errorHandler(res, error);
-//   }
-// };
+    res.cookie("token", token, { httpOnly: true });
+    res.send({ message: "User logged in", token });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
 
-// const logoutAdmin = async (req, res) => {
-//   try {
-//     const adminId = req.params.id;
-//     res.clearCookie("token");
-//   } catch (error) {
-//     errorHandler(res, error);
-//   }
-// };
+const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token");
+    res.status(200).send({ message: "User logged out successfully" });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
 
 module.exports = {
   getUserByID,
@@ -168,4 +148,6 @@ module.exports = {
   addUser,
   deleteUser,
   updateUser,
+  loginUser,
+  logoutUser,
 };

@@ -107,7 +107,7 @@ const updateAuthor = async (req, res) => {
       nick_name,
       email,
       phone,
-      password: hashedPassword,
+      password,
       info,
       position,
       photo,
@@ -118,6 +118,7 @@ const updateAuthor = async (req, res) => {
     if (!mongoose.isValidObjectId(authorID)) {
       return res.status(400).send({ message: "Incorrect ObjectID" });
     }
+    const hashedPassword = password ? bcrypt.hashSync(password, 10) : undefined;
     const updatedAuthor = await Author.findByIdAndUpdate(authorID, {
       first_name,
       last_name,
@@ -143,40 +144,38 @@ const updateAuthor = async (req, res) => {
   }
 };
 
-// const loginAdmin = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     const admin = await Admin.findOne({ email });
-//     if (!admin) {
-//       return res.status(404).send({ message: "Admin not found" });
-//     }
-//     const validPassword = await bcrypt.compareSync(password, admin.password);
+const loginAuthor = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const author = await Author.findOne({ email });
+    if (!author) {
+      return res.status(404).send({ message: "Author not found" });
+    }
 
-//     if (!validPassword) {
-//       return res.status(400).send({ message: "Invalid email or password" });
-//     }
+    const payload = {
+      _id: author._id,
+      email: author.email,
+    };
 
-//     const payload = {
-//       _id: admin._id,
-//       email: admin.email,
-//     };
-//     const token = jwt.sign(payload, config.get("tokenKey"), {
-//       expiresIn: config.get("tokenTime"),
-//     });
-//     res.send({ message: "Admin logged in", token });
-//   } catch (error) {
-//     errorHandler(res, error);
-//   }
-// };
+    const token = jwt.sign(payload, config.get("tokeyKey"), {
+      expiresIn: config.get("tokenTime"),
+    });
 
-// const logoutAdmin = async (req, res) => {
-//   try {
-//     const adminId = req.params.id;
-//     res.clearCookie("token");
-//   } catch (error) {
-//     errorHandler(res, error);
-//   }
-// };
+    res.cookie("token", token, { httpOnly: true });
+    res.send({ message: "Author logged in", token });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
+
+const logoutAuthor = async (req, res) => {
+  try {
+    res.clearCookie("token");
+    res.status(200).send({ message: "Author logged out succesfully" });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
 
 module.exports = {
   getAuthorByID,
@@ -184,4 +183,6 @@ module.exports = {
   updateAuthor,
   deleteAuthor,
   addAuthor,
+  loginAuthor,
+  logoutAuthor,
 };
