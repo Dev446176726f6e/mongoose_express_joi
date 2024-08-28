@@ -4,6 +4,7 @@ const Author = require("../schemas/Author");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
+const myJwt = require("../services/jwt_service");
 
 const addAuthor = async (req, res) => {
   try {
@@ -35,7 +36,25 @@ const addAuthor = async (req, res) => {
       is_active,
     });
 
-    res.status(201).send({ message: "New author created", newAuthor });
+    const payload = {
+      _id: author._id,
+      email: author.email,
+    };
+
+    const tokens = myJwt.generateTokens(payload);
+    newAuthor.token = tokens.refreshToken;
+    await newAuthor.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_as"),
+    });
+
+    res.status(201).send({
+      message: "New author created",
+      id: newAuthor._id,
+      accessToken: tokens.accessToken,
+    });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -152,17 +171,37 @@ const loginAuthor = async (req, res) => {
       return res.status(404).send({ message: "Author not found" });
     }
 
+    const validPassword = await bcrypt.compareSync(password, author.password);
+
+    if (!validPassword) {
+      return res.status(400).send({ message: "Invalid email or password" });
+    }
+
     const payload = {
       _id: author._id,
       email: author.email,
+      is_expert: author.is_expert,
     };
 
-    const token = jwt.sign(payload, config.get("tokeyKey"), {
-      expiresIn: config.get("tokenTime"),
+    // const token = jwt.sign(payload, config.get("tokeyKey"), {
+    //   expiresIn: config.get("tokenTime"),
+    // });
+
+    const tokens = myJwt.generateTokens(payload);
+    author.token = tokens.refreshToken;
+    await author.save();
+
+    // res.cookie("token", token, { httpOnly: true });
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_ms"),
     });
 
-    res.cookie("token", token, { httpOnly: true });
-    res.send({ message: "Author logged in", token });
+    res.send({
+      message: "Author logged in",
+      id: author._id,
+      accessToken: tokens.accessToken,
+    });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -170,8 +209,23 @@ const loginAuthor = async (req, res) => {
 
 const logoutAuthor = async (req, res) => {
   try {
-    res.clearCookie("token");
-    res.status(200).send({ message: "Author logged out succesfully" });
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(403).send({ message: error.message });
+    }
+    const author = await Author.findOneAndUpdate(
+      { token: refreshToken },
+      { token: "" },
+      { new: true }
+    );
+    if (!author) {
+      return res.status(400).send({ message: "Invalid refresh token" });
+    }
+    res.clearCookie("refreshToken");
+    res.status(200).send({
+      message: "Author logged out succesfully",
+      refreshToken: author.token,
+    });
   } catch (error) {
     errorHandler(res, error);
   }

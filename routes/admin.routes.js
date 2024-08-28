@@ -9,9 +9,11 @@ const {
   logoutAdmin,
 } = require("../controllers/admin");
 
+const adminPolice = require("../middleware/admin_police");
+
 const router = express.Router();
 
-router.get("/", getAdmins);
+router.get("/", adminPolice, getAdmins);
 router.post("/add", addAdmin);
 router.delete("/delete", deleteAdmin);
 router.put("/update/:id", updateAdmin);

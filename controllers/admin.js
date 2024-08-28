@@ -4,6 +4,7 @@ const Admin = require("../schemas/Admin");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
+const myJwt = require("../services/jwt_service");
 
 const addAdmin = async (req, res) => {
   try {
@@ -16,11 +17,28 @@ const addAdmin = async (req, res) => {
       password: hashedPassword,
       is_active,
       is_creator,
-      created_date: Date.now(),
+      created_date: Date(),
       updated_date: null,
     });
 
-    res.status(201).send({ message: "New admin created" });
+    const payload = {
+      _id: newAdmin._id,
+      email: newAdmin.email,
+    };
+    const tokens = myJwt.generateTokens(payload);
+    newAdmin.token = tokens.refreshToken;
+    await newAdmin.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_ms"),
+    });
+
+    res.status(201).send({
+      message: "New admin created",
+      id: newAdmin._id,
+      accessToken: tokens.accessToken,
+    });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -28,20 +46,6 @@ const addAdmin = async (req, res) => {
 
 const getAdmins = async (req, res) => {
   try {
-    const authorization = req.headers.authorization;
-    if (!authorization) {
-      return res.status(403).send({ message: "Token is not provided" });
-    }
-    console.log(authorization);
-    const bearer = authorization.split(" ")[0];
-    const token = authorization.split(" ")[1];
-
-    if (bearer != "Bearer" || !token) {
-      return res.status(403).send({ message: "Wrong token" });
-    }
-    const decodedToken = jwt.decode(token, config.get("tokenKey"));
-    console.log(decodedToken);
-
     const admins = await Admin.find();
     if (admins.length === 0) {
       return res.status(204).send({ message: "Admins is empty.!" });
@@ -129,13 +133,24 @@ const loginAdmin = async (req, res) => {
       _id: admin._id,
       email: admin.email,
     };
-    const token = jwt.sign(payload, config.get("tokenKey"), {
-      expiresIn: config.get("tokenTime"),
-    });
+    // const token = jwt.sign(payload, config.get("tokenKey"), {
+    //   expiresIn: config.get("tokenTime"),
+    // });
+    const tokens = myJwt.generateTokens(payload);
+    admin.token = tokens.refreshToken;
+    await admin.save();
 
-    res.cookie("token", token, { httpOnly: true });
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_ms"),
+    });
+    // res.cookie("tokens", tokens, { httpOnly: true });
     // console.log(res.getHeaders());
-    res.send({ message: "Admin logged in", token });
+    res.send({
+      message: "Admin logged in",
+      id: admin._id,
+      accessToken: tokens.accessToken,
+    });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -143,8 +158,22 @@ const loginAdmin = async (req, res) => {
 
 const logoutAdmin = async (req, res) => {
   try {
-    res.clearCookie("token");
-    res.status(200).send({ message: "Admin logged out successfully" });
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(403).send({ message: error.message });
+    }
+    // res.clearCookie("token");
+    const admin = await Admin.findOneAndUpdate(
+      { token: refreshToken },
+      { token: "" },
+      { new: true }
+    );
+    if (!admin) {
+      return res.status(400).send({ message: "Invalid refresh token" });
+    }
+    res.clearCookie("refreshToken");
+    // res.status(200).send({ message: "Admin logged out successfully" });
+    res.send({ refreshToken: admin.token });
   } catch (error) {
     errorHandler(res, error);
   }

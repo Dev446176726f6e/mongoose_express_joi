@@ -4,6 +4,7 @@ const User = require("../schemas/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
+const myJwt = require("../services/jwt_service");
 
 const addUser = async (req, res) => {
   try {
@@ -29,7 +30,26 @@ const addUser = async (req, res) => {
       is_active,
     });
 
-    res.status(201).send({ message: "New user created", newUser });
+    const payload = {
+      _id: user._id,
+      email: user.email,
+    };
+
+    const tokens = myJwt.generateTokens(payload);
+    newUser.token = tokens.refreshToken;
+    await newUser.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_as"),
+    });
+
+    // res.status(201).send({ message: "New user created", newUser });
+    res.status(201).send({
+      message: "New user created",
+      id: newUser._id,
+      accessToken: tokens.accessToken,
+    });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -122,12 +142,20 @@ const loginUser = async (req, res) => {
       _id: user._id,
       email: user.email,
     };
-    const token = jwt.sign(payload, config.get("tokenKey"), {
-      expiresIn: config.get("tokenTime"),
+    const tokens = myJwt.generateTokens(payload);
+    user.token = tokens.refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_ms"),
     });
 
-    res.cookie("token", token, { httpOnly: true });
-    res.send({ message: "User logged in", token });
+    res.send({
+      message: "User logged in",
+      id: user._id,
+      accessToken: tokens.accessToken,
+    });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -135,8 +163,23 @@ const loginUser = async (req, res) => {
 
 const logoutUser = async (req, res) => {
   try {
-    res.clearCookie("token");
-    res.status(200).send({ message: "User logged out successfully" });
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(403).send({ message: error.message });
+    }
+    const user = await User.findOneAndUpdate(
+      { token: refreshToken },
+      { token: "" },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(400).send({ message: "Invalid refresh token" });
+    }
+    res.clearCookie("refreshToken");
+    res.status(200).send({
+      message: "User logged out succesfully",
+      refreshToken: user.token,
+    });
   } catch (error) {
     errorHandler(res, error);
   }

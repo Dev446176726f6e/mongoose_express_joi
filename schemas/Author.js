@@ -46,7 +46,7 @@ const AuthorSchema = new Schema(
       trim: true,
       minLength: 8,
       // match:
-        // /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      // /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
     },
     info: {
       type: String,
@@ -72,6 +72,8 @@ const AuthorSchema = new Schema(
       type: Boolean,
       required: true,
     },
+    token: { type: String },
+    activation_link: String,
   },
   {
     versionKey: false,

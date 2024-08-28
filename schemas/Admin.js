@@ -31,7 +31,7 @@ const AdminSchema = new Schema(
       trim: true,
       minLength: 8,
       // match:
-        // /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      // /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
     },
     is_active: {
       type: Boolean,
@@ -47,6 +47,8 @@ const AdminSchema = new Schema(
     updated_date: {
       type: Date,
     },
+    token: { type: String },
+    activation_link: String,
   },
   {
     versionKey: false,
