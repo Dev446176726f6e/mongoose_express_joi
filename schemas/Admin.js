@@ -4,7 +4,7 @@ const AdminSchema = new Schema(
   {
     name: {
       type: String,
-      required: true,
+      // required: true,
       trim: true,
       uppercase: true,
       minLength: 1,

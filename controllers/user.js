@@ -5,19 +5,17 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const myJwt = require("../services/jwt_service");
+const { to } = require("../helpers/to_promise");
+const { userValidation } = require("../validations/user.validation");
 
 const addUser = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      info,
-      photo,
-      created_date,
-      updated_date,
-      is_active,
-    } = req.body;
+    const { error, value } = userValidation(req.body);
+    if (error) {
+      console.log(error.details);
+      return res.status(400).send({ message: error.message });
+    }
+    const { name, email, password, info, photo, is_active } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
     const newUser = await User.create({
       name,
@@ -25,14 +23,13 @@ const addUser = async (req, res) => {
       password: hashedPassword,
       info,
       photo,
-      created_date,
-      updated_date,
-      is_active,
+      created_date: Date(),
+      updated_date: null,
     });
 
     const payload = {
-      _id: user._id,
-      email: user.email,
+      _id: newUser._id,
+      email: newUser.email,
     };
 
     const tokens = myJwt.generateTokens(payload);
@@ -41,7 +38,7 @@ const addUser = async (req, res) => {
 
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
-      maxAge: config.get("refresh_time_as"),
+      maxAge: config.get("refresh_time_ms"),
     });
 
     // res.status(201).send({ message: "New user created", newUser });
@@ -75,8 +72,18 @@ const getUserByID = async (req, res) => {
     }
     const foundUser = await User.findById(userID);
     if (!foundUser) {
-      return res.status(404).send({ message: "User not found" });
+      return res.status(404).send({
+        message: "User not found",
+      });
     }
+
+    if (userID !== req.user._id) {
+      return res.status(403).send({
+        message:
+          "Forbidden. You do not have permission to access this resource.",
+      });
+    }
+
     res.status(200).send(foundUser);
   } catch (error) {
     errorHandler(res, error);
@@ -185,6 +192,48 @@ const logoutUser = async (req, res) => {
   }
 };
 
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(403).send({ message: "RefreshToken not found" });
+    }
+    const [error, decodedRefreshToken] = await to(
+      myJwt.verifyRefreshToken(refreshToken)
+    );
+    if (error) {
+      return res.status(403).send({ error: error.message });
+    }
+    const userFromDB = await User.findOne({ token: refreshToken });
+    if (!userFromDB) {
+      return res
+        .status(403)
+        .send({ message: "Forbidden user: refreshToken does not match" });
+    }
+    const payload = {
+      _id: userFromDB._id,
+      email: userFromDB.email,
+    };
+
+    const tokens = myJwt.generateTokens(payload);
+    userFromDB.token = tokens.refreshToken;
+    await userFromDB.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_ms"),
+    });
+
+    res.status(201).send({
+      message: "Token refreshed succesfully",
+      id: userFromDB._id,
+      accessToken: tokens.accessToken,
+    });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
+
 module.exports = {
   getUserByID,
   getUsers,
@@ -193,4 +242,5 @@ module.exports = {
   updateUser,
   loginUser,
   logoutUser,
+  refreshToken,
 };

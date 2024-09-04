@@ -19,7 +19,11 @@ module.exports = async function (req, res, next) {
     if (error) {
       return res.status(403).send({ message: error.message });
     }
-    req.author = decodedToken;
+    req.admin = decodedToken;
+    // if verify returns true. it will decode the token and returns. 
+    // which will be payload.
+    // console.log(decodedToken);
+
     next();
   } catch (error) {
     console.log(error);

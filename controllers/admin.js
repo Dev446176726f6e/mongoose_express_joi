@@ -5,9 +5,16 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const myJwt = require("../services/jwt_service");
+const { adminValidation } = require("../validations/admin.validation");
 
 const addAdmin = async (req, res) => {
   try {
+    const { error, value } = adminValidation(req.body);
+    if (error) {
+      console.log(error.details);
+      return res.status(400).send({ message: error.message });
+    }
+
     const { name, email, phone, password, is_active, is_creator } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
     const newAdmin = await Admin.create({
@@ -59,6 +66,8 @@ const getAdmins = async (req, res) => {
 const getAdminByID = async (req, res) => {
   try {
     const adminID = req.params.id;
+    // console.log(adminID);
+    // console.log(req.admin._id);
     if (!mongoose.isValidObjectId(adminID)) {
       return res.status(400).send({ message: "Incorrect ObjectID" });
     }
@@ -66,7 +75,14 @@ const getAdminByID = async (req, res) => {
     if (!foundAdmin) {
       return res.status(404).send({ message: "Admin not found" });
     }
-    console.log(foundAdmin);
+
+    if (adminID !== req.admin._id) {
+      return res.status(403).send({
+        message:
+          "Forbidden. You do not have permission to access this resource.",
+      });
+    }
+    // console.log(foundAdmin);
     res.status(200).send(foundAdmin);
   } catch (error) {
     errorHandler(res, error);
@@ -179,6 +195,47 @@ const logoutAdmin = async (req, res) => {
   }
 };
 
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(403).send({ message: "RefreshToken not found" });
+    }
+    const [error, decodedRefreshToken] = await to(
+      myJwt.verifyRefreshToken(refreshToken)
+    );
+    if (error) {
+      return res.status(403).send({ error: error.message });
+    }
+    const adminFromDB = await Admin.findOne({ token: refreshToken });
+    if (!adminFromDB) {
+      return res
+        .status(403)
+        .send({ message: "Forbidden admin: refreshToken does not match)" });
+    }
+    const payload = {
+      _id: adminFromDB._id,
+      email: adminFromDB.email,
+    };
+    const tokens = myJwt.generateTokens(payload);
+    adminFromDB.token = tokens.refreshToken;
+    await adminFromDB.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_as"),
+    });
+
+    res.status(201).send({
+      message: "Token refreshed succesfully",
+      id: adminFromDB._id,
+      accessToken: tokens.accessToken,
+    });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
+
 module.exports = {
   getAdminByID,
   getAdmins,
@@ -187,4 +244,5 @@ module.exports = {
   addAdmin,
   logoutAdmin,
   loginAdmin,
+  refreshToken,
 };

@@ -1,0 +1,62 @@
+<form id="loginForm">
+  <div class="mb-3">
+    <label for="email" class="form-label">Author Email</label>
+    <input
+      type="email"
+      name="email"
+      class="form-control"
+      id="email"
+      {{! aria-describedby="emailHelp" }}
+      value="emily.davis@example.net"
+    />
+    {{! <div id="emailHelp" class="form-text">We'll never share your email with
+      anyone else.</div> }}
+  </div>
+  <div class="mb-3">
+    <label for="password" class="form-label">Password</label>
+    <input
+      type="password"
+      name="password"
+      class="form-control"
+      id="password"
+      value="Pass@word456!"
+    />
+  </div>
+  {{! <div class="mb-3 form-check">
+    <input type="checkbox" class="form-check-input" id="exampleCheck1" />
+    <label class="form-check-label" for="exampleCheck1">Check me out</label>
+  </div> }}
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+<script>
+const form = document.getElementById("loginForm");
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    
+    try {
+        const response = await fetch("http://localhost:3004/api/user/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (response.ok) {
+            console.log("Logged in successfully");
+            const data = await response.json();
+            console.log(data.accessToken);
+            localStorage.setItem("accessToken", data.accessToken);
+        } else {
+            console.error("Login failed");
+        }
+    } catch (error) {
+        console.log("Fetch error: ", error);
+    }
+});
+</script>

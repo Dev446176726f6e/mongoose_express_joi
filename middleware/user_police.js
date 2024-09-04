@@ -19,6 +19,9 @@ module.exports = async function (req, res, next) {
     if (error) {
       return res.status(403).send({ message: error.message });
     }
+    // question what type of data is request.?
+    // apparently there are many types of data inside. but.
+    // the data you enter is object. if you know object can get new data like that.
     req.user = decodedToken;
     next();
   } catch (error) {

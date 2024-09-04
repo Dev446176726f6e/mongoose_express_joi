@@ -70,7 +70,6 @@ const AuthorSchema = new Schema(
     },
     is_active: {
       type: Boolean,
-      required: true,
     },
     token: { type: String },
     activation_link: String,

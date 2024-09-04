@@ -3,11 +3,22 @@ const { errorHandler } = require("../helpers/error_handler");
 const Author = require("../schemas/Author");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { authorValidation } = require("../validations/author.validation");
 const config = require("config");
 const myJwt = require("../services/jwt_service");
+const { to } = require("../helpers/to_promise");
+
+const uuid = require("uuid");
+const mail_service = require("../services/mail_service");
+const { badRequest } = require("../errors/api_error");
 
 const addAuthor = async (req, res) => {
   try {
+    const { error, value } = authorValidation(req.body);
+    if (error) {
+      console.log(error.details);
+      return res.status(400).send({ message: error.message });
+    }
     const {
       first_name,
       last_name,
@@ -22,6 +33,8 @@ const addAuthor = async (req, res) => {
       is_active,
     } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
+    const activation_link = uuid.v4();
+
     const newAuthor = await Author.create({
       first_name,
       last_name,
@@ -34,11 +47,19 @@ const addAuthor = async (req, res) => {
       photo,
       is_expert,
       is_active,
+      activation_link,
     });
+    // http://localhost:3000
+    await mail_service.sendActivationMail(
+      email,
+      `${config.get("api_url")}:${config.get(
+        "port"
+      )}/api/author/activate/${activation_link}`
+    );
 
     const payload = {
-      _id: author._id,
-      email: author.email,
+      _id: newAuthor._id,
+      email: newAuthor.email,
     };
 
     const tokens = myJwt.generateTokens(payload);
@@ -47,7 +68,7 @@ const addAuthor = async (req, res) => {
 
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
-      maxAge: config.get("refresh_time_as"),
+      maxAge: config.get("refresh_time_ms"),
     });
 
     res.status(201).send({
@@ -80,9 +101,13 @@ const getAuthors = async (req, res) => {
     if (authors.length === 0) {
       return res.status(204).send({ message: "Authors is empty.!" });
     }
+
+    // throw badRequest("Authors is empty.!"); // hozir yaratilgan error pastdagi errorHandler tutib oladi.
+
     res.status(200).send(authors);
   } catch (error) {
     errorHandler(res, error);
+    // istasak bu qismga next-ni qo'shib errorHandler o'rniga app.js da tutib olsak bo'ladi.
   }
 };
 
@@ -96,7 +121,14 @@ const getAuthorByID = async (req, res) => {
     if (!foundAuthor) {
       return res.status(404).send({ message: "Author not found" });
     }
-    console.log(foundAuthor);
+
+    if (authorID !== req.author._id) {
+      return res.status(403).send({
+        message:
+          "Forbidden. You do not have permission to access this resource.",
+      });
+    }
+    // console.log(foundAuthor);
     res.status(200).send(foundAuthor);
   } catch (error) {
     errorHandler(res, error);
@@ -181,6 +213,7 @@ const loginAuthor = async (req, res) => {
       _id: author._id,
       email: author.email,
       is_expert: author.is_expert,
+      // author_roles: ["READ", "WRITE"],
     };
 
     // const token = jwt.sign(payload, config.get("tokeyKey"), {
@@ -205,13 +238,25 @@ const loginAuthor = async (req, res) => {
   } catch (error) {
     errorHandler(res, error);
   }
+
+  // try {
+  //   setTimeout(function () {
+  //     throw new Error("uncaughtException example");
+  //   });
+  // } catch (error) {
+  //   console.log(error);
+  // }
+
+  // new Promise((_, reject) => {
+  //   reject(new Error("unhandledRejection example"));
+  // });
 };
 
 const logoutAuthor = async (req, res) => {
   try {
     const { refreshToken } = req.cookies;
     if (!refreshToken) {
-      return res.status(403).send({ message: error.message });
+      return res.status(403).send({ message: "RefreshToken not found" });
     }
     const author = await Author.findOneAndUpdate(
       { token: refreshToken },
@@ -231,6 +276,75 @@ const logoutAuthor = async (req, res) => {
   }
 };
 
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(403).send({ message: "RefreshToken not found" });
+    }
+    const [error, decodedRefreshToken] = await to(
+      myJwt.verifyRefreshToken(refreshToken)
+    );
+    if (error) {
+      return res.status(403).send({ error: error.message });
+    }
+    const authorFromDB = await Author.findOne({ token: refreshToken });
+    if (!authorFromDB) {
+      return res
+        .status(403)
+        .send({ message: "Forbidden author(refreshToken does not match)" });
+    }
+
+    // shortening repetition part. DRY
+    const payload = {
+      _id: authorFromDB._id,
+      email: authorFromDB.email,
+    };
+
+    const tokens = myJwt.generateTokens(payload);
+    authorFromDB.token = tokens.refreshToken;
+    await authorFromDB.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: config.get("refresh_time_as"),
+    });
+
+    res.status(201).send({
+      message: "Token refreshed succesfully",
+      id: authorFromDB._id,
+      accessToken: tokens.accessToken,
+    });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
+
+// const authorActivate = async (req, res) => {
+//   try {
+//     const link = req.params.link;
+//     const author = await Author.findOne({ activation_link: link });
+
+//     if (!author) {
+//       return res.status(400).send({ message: "Author not found" });
+//     }
+
+//     if (author.is_active) {
+//       return res
+//         .status(400)
+//         .send({ message: "Author already activated his account" });
+//     }
+//     author.is_active = true;
+//     await author.save();
+//     res.send({
+//       is_active: author.is_active,
+//       message: "Author activated succesfully",
+//     });
+//   } catch (error) {
+//     errorHandler(res, error);
+//   }
+// };
+
 module.exports = {
   getAuthorByID,
   getAuthors,
@@ -239,4 +353,7 @@ module.exports = {
   addAuthor,
   loginAuthor,
   logoutAuthor,
+  refreshToken,
+  // authorActivate,
+  refreshToken,
 };

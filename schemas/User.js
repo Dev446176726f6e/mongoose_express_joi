@@ -22,8 +22,8 @@ const UserSchema = new Schema(
       type: String,
       required: true,
       trim: true,
-      minLength: 8,
-      maxLength: 50,
+      // minLength: 8,
+      // maxLength: 50,
       // match:
       // /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
     },
@@ -41,15 +41,12 @@ const UserSchema = new Schema(
     },
     created_date: {
       type: Date,
-      required: true,
     },
     updated_date: {
       type: Date,
-      required: true,
     },
     is_active: {
       type: Boolean,
-      required: true,
     },
     token: { type: String },
     activation_link: String,

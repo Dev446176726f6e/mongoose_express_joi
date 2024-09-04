@@ -1,0 +1,141 @@
+{
+  "level": "\u001b[31merror\u001b[39m",
+  "message": "middlewareError",
+  "meta": {
+    "date": "Thu Aug 29 2024 10:29:46 GMT+0500 (Uzbekistan Standard Time)",
+    "error": {
+      "body": "{\n  \"first_name\": \"Dilshod\",\n  \"last_name\": \"Ochilov\",\n  \"nick_name\": \"d_ochilov\",\n  \"email\": \"dilshod12@gmail.com\",\n  \"phone\": \"+998 90 123-45-67\",\n  \"password\": \"SecurePass123!\",\n  \"info\": \"Experienced author with a focus on technology and innovation.\",\n  \"position\": \"Senior Writer\",\n  \"photo\": \"https://example.com/photos/johndoe.jpg\",\n  \"is_expert\": true\n  .\n}",
+      "expose": true,
+      "status": 400,
+      "statusCode": 400,
+      "type": "entity.parse.failed"
+    },
+    "exception": true,
+    "level": "error",
+    "message": "uncaughtException: Expected ',' or '}' after property value in JSON at position 362 (line 12 column 3)\nSyntaxError: Expected ',' or '}' after property value in JSON at position 362 (line 12 column 3)\n    at JSON.parse (<anonymous>)\n    at parse (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/body-parser/lib/types/json.js:92:19)\n    at /Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/body-parser/lib/read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:206:9)\n    at invokeCallback (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js:238:16)\n    at done (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js:227:7)\n    at IncomingMessage.onEnd (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js:287:7)\n    at IncomingMessage.emit (node:events:520:28)\n    at endReadableNT (node:internal/streams/readable:1696:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)",
+    "os": {
+      "loadavg": [3.50830078125, 3.21484375, 2.92724609375],
+      "uptime": 827448
+    },
+    "process": {
+      "argv": [
+        "/opt/homebrew/Cellar/node/22.6.0/bin/node",
+        "/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/app"
+      ],
+      "cwd": "/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO",
+      "execPath": "/opt/homebrew/Cellar/node/22.6.0/bin/node",
+      "gid": 20,
+      "memoryUsage": {
+        "arrayBuffers": 18292879,
+        "external": 20557802,
+        "heapTotal": 29016064,
+        "heapUsed": 25474744,
+        "rss": 23822336
+      },
+      "pid": 8887,
+      "uid": 501,
+      "version": "v22.6.0"
+    },
+    "req": {
+      "headers": {
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br",
+        "connection": "keep-alive",
+        "content-length": "365",
+        "content-type": "application/json",
+        "cookie": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmQwMDZmM2YzOTBkOWM4NTNjYjgyM2YiLCJlbWFpbCI6ImRpbHNob2QxMkBnbWFpbC5jb20iLCJpYXQiOjE3MjQ5MDkzMDEsImV4cCI6MTcyNjIwNTMwMX0.n8ed9KAHi3J3TCoii9OOPmF2dih5XTgwnfSLa9x_Bz4; session_key=f20729b5-69e4-49da-87b0-5cfe8be6bff5; token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmNkZjhjNGMyMWU3OTI5M2VhYmNkNjAiLCJlbWFpbCI6ImFsaWNlY29vcGVyNEBleGFtcGxlLmNvbSIsImlhdCI6MTcyNDg0MTgxMywiZXhwIjoxNzI0ODQ1NDEzfQ.EVTNon2zXF0Gl4jzhoS3tv_HLKY7z5r2CAO4KMQOZ20; tokens=j%3A%7B%22accessToken%22%3A%22eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmNkZjhjNGMyMWU3OTI5M2VhYmNkNjAiLCJlbWFpbCI6ImFsaWNlY29vcGVyNEBleGFtcGxlLmNvbSIsImlhdCI6MTcyNDg2MTYxNywiZXhwIjoxNzI0ODYyNTE3fQ._KHwmJJ50r7Myt_3jdyTNM2tf9lk-yVEaHf-cAWuGGc%22%2C%22refreshToken%22%3A%22eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmNkZjhjNGMyMWU3OTI5M2VhYmNkNjAiLCJlbWFpbCI6ImFsaWNlY29vcGVyNEBleGFtcGxlLmNvbSIsImlhdCI6MTcyNDg2MTYxNywiZXhwIjoxNzI2MTU3NjE3fQ.iEEU4PW7A7YBC8pMlK9-sI_gG9zGOamZA1sfMPqIJ7M%22%7D",
+        "host": "localhost:3004",
+        "postman-token": "ff034692-4acc-4600-b4c1-d9186a86a066",
+        "user-agent": "PostmanRuntime/7.41.2"
+      },
+      "httpVersion": "1.1",
+      "method": "POST",
+      "originalUrl": "/api/author/add",
+      "query": {},
+      "url": "/api/author/add"
+    },
+    "stack": "SyntaxError: Expected ',' or '}' after property value in JSON at position 362 (line 12 column 3)\n    at JSON.parse (<anonymous>)\n    at parse (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/body-parser/lib/types/json.js:92:19)\n    at /Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/body-parser/lib/read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:206:9)\n    at invokeCallback (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js:238:16)\n    at done (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js:227:7)\n    at IncomingMessage.onEnd (/Users/macbookair/BootCamp Result (Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js:287:7)\n    at IncomingMessage.emit (node:events:520:28)\n    at endReadableNT (node:internal/streams/readable:1696:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)",
+    "trace": [
+      {
+        "column": null,
+        "file": null,
+        "function": "JSON.parse",
+        "line": null,
+        "method": "parse",
+        "native": false
+      },
+      {
+        "column": 19,
+        "file": "Full Stack) 19.06.24/ITINFO/node_modules/body-parser/lib/types/json.js",
+        "function": "parse (/Users/macbookair/BootCamp Result",
+        "line": 92,
+        "method": null,
+        "native": false
+      },
+      {
+        "column": 18,
+        "file": "Full Stack) 19.06.24/ITINFO/node_modules/body-parser/lib/read.js",
+        "function": "/Users/macbookair/BootCamp Result",
+        "line": 128,
+        "method": null,
+        "native": false
+      },
+      {
+        "column": 9,
+        "file": "node:async_hooks",
+        "function": "AsyncResource.runInAsyncScope",
+        "line": 206,
+        "method": "runInAsyncScope",
+        "native": false
+      },
+      {
+        "column": 16,
+        "file": "Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js",
+        "function": "invokeCallback (/Users/macbookair/BootCamp Result",
+        "line": 238,
+        "method": null,
+        "native": false
+      },
+      {
+        "column": 7,
+        "file": "Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js",
+        "function": "done (/Users/macbookair/BootCamp Result",
+        "line": 227,
+        "method": null,
+        "native": false
+      },
+      {
+        "column": 7,
+        "file": "Full Stack) 19.06.24/ITINFO/node_modules/raw-body/index.js",
+        "function": "IncomingMessage.onEnd (/Users/macbookair/BootCamp Result",
+        "line": 287,
+        "method": "onEnd (/Users/macbookair/BootCamp Result",
+        "native": false
+      },
+      {
+        "column": 28,
+        "file": "node:events",
+        "function": "IncomingMessage.emit",
+        "line": 520,
+        "method": "emit",
+        "native": false
+      },
+      {
+        "column": 12,
+        "file": "node:internal/streams/readable",
+        "function": "endReadableNT",
+        "line": 1696,
+        "method": null,
+        "native": false
+      },
+      {
+        "column": 21,
+        "file": "node:internal/process/task_queues",
+        "function": "process.processTicksAndRejections",
+        "line": 82,
+        "method": "processTicksAndRejections",
+        "native": false
+      }
+    ]
+  }
+}
